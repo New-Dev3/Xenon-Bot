@@ -61,10 +61,11 @@ class cache_response:
             # Cache has expired; ignore
             return None
 
-        if (datetime.utcnow() - cached.timestamp) > self.td:
-            return None
-
-        return cached.data
+        return (
+            None
+            if (datetime.utcnow() - cached.timestamp) > self.td
+            else cached.data
+        )
 
     def __call__(self, handler):
         async def wrapper(request, *args, **kwargs):
@@ -131,12 +132,16 @@ class ratelimit:
 
     def __call__(self, handler):
         async def wrapper(request, *args, **kwargs):
-            if not self.check_limit(request):
-                return response.json({
-                    "error": "You got ratelimited",
-                    "retry_after": self.per.total_seconds() * 1000
-                }, status=429)
-
-            return await handler(request, *args, **kwargs)
+            return (
+                await handler(request, *args, **kwargs)
+                if self.check_limit(request)
+                else response.json(
+                    {
+                        "error": "You got ratelimited",
+                        "retry_after": self.per.total_seconds() * 1000,
+                    },
+                    status=429,
+                )
+            )
 
         return wrapper

@@ -11,12 +11,12 @@ async def convert_templates():
     async for template in db.templates.find():
         data = template["data"]
 
-        guessed_tags = []
-        for tag in VALID_TAGS:
-            if tag in template["name"].lower() or tag in template["description"].lower():
-                guessed_tags.append(tag)
-
-        channels = []
+        guessed_tags = [
+            tag
+            for tag in VALID_TAGS
+            if tag in template["name"].lower()
+            or tag in template["description"].lower()
+        ]
 
         text_channels = sorted(
             filter(lambda c: c["type"] == wkr.ChannelType.GUILD_TEXT.value, data["channels"]),
@@ -31,19 +31,30 @@ async def convert_templates():
             key=lambda c: c["position"]
         )
 
-        for channel in filter(lambda c: c.get("parent_id") is None, text_channels):
-            channels.append(channel)
-
-        for channel in filter(lambda c: c.get("parent_id") is None, voice_channels):
-            channels.append(channel)
+        channels = list(filter(lambda c: c.get("parent_id") is None, text_channels))
+        channels.extend(
+            iter(filter(lambda c: c.get("parent_id") is None, voice_channels))
+        )
 
         for ctg in ctg_channels:
             channels.append(ctg)
-            for channel in filter(lambda c: c.get("parent_id") == ctg["id"], text_channels):
-                channels.append(channel)
+            channels.extend(
+                iter(
+                    filter(
+                        lambda c: c.get("parent_id") == ctg["id"],
+                        text_channels,
+                    )
+                )
+            )
 
-            for channel in filter(lambda c: c.get("parent_id") == ctg["id"], voice_channels):
-                channels.append(channel)
+            channels.extend(
+                iter(
+                    filter(
+                        lambda c: c.get("parent_id") == ctg["id"],
+                        voice_channels,
+                    )
+                )
+            )
 
         print(channels)
 

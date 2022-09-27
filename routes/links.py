@@ -34,7 +34,7 @@ async def docs_link(request):
 
 @bp.route("/docs/<path:path>")
 async def docs_link(request, path):
-    return response.redirect(DOCS_LINK + "/" + path, status=307)
+    return response.redirect(f"{DOCS_LINK}/{path}", status=307)
 
 
 @bp.route("/patreon")

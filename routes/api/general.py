@@ -96,9 +96,7 @@ async def get_ids(request, _):
 
     translator = await request.app.db.id_translators.find_one({"source_id": source_id, "target_id": target_id})
 
-    if translator is not None:
-        del translator["_id"]
-        return response.json(translator)
-
-    else:
+    if translator is None:
         return response.json({"error": "No id translator found"}, status=404)
+    del translator["_id"]
+    return response.json(translator)
